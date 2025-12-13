@@ -1,0 +1,942 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>Mabinogi Mobile 가공 계산기 [데이안-잔월]</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;700&display=swap" rel="stylesheet">
+
+<style>
+    /* ------------------------------ */
+    /* 1. 다크 모드 (기본 테마) 및 공통 스타일 */
+    /* ------------------------------ */
+    :root {
+        --bg-color: #121212;
+        --container-bg: #1e1e1e;
+        --text-color: #e0e0e0;
+        --header-color: #FFFFFF; /* 제목 색상 흰색 */
+        --input-bg: #2c2c2c;
+        --input-border: #555;
+        --shadow-color: rgba(0,0,0,0.5);
+        
+        /* 시계 텍스트 색상 (다크 모드) */
+        --clock-text-color-dark: #FFFFFF;
+        /* 카운트다운 색상 */
+        --countdown-color: #03A9F4;
+        /* 강조색 (직접 재료 섹션) */
+        --highlight-border: #ff9900;
+        --highlight-bg: #2c2424;
+    }
+
+    /* ------------------------------ */
+    /* 2. 밝은 모드 스타일 (라이트 모드) */
+    /* ------------------------------ */
+    body.light-mode {
+        --bg-color: #f0f0f0;
+        --container-bg: #ffffff;
+        --text-color: #333333;
+        --header-color: #111111; /* 라이트 모드 시 제목은 검정색으로 */
+        --input-bg: #ffffff;
+        --input-border: #ccc;
+        --shadow-color: rgba(0,0,0,0.15);
+        
+        /* 시계 텍스트 색상 (밝은 모드) - 진한 회색으로 수정됨 */
+        --clock-text-color-light: #333333;
+        /* 강조색 (직접 재료 섹션) */
+        --highlight-border: #ff9900;
+        --highlight-bg: #fff5e6;
+    }
+
+    /* ------------------------------ */
+    /* 3. 공통 적용 스타일 */
+    /* ------------------------------ */
+    body { 
+        background-color: var(--bg-color);
+        font-family: 'Noto Sans KR', 'Malgun Gothic', 'Segoe UI', Tahoma, sans-serif; 
+        color: var(--text-color); 
+        font-weight: 400;
+        padding: 20px; 
+        display: flex;
+        justify-content: center;
+        transition: background-color 0.3s, color 0.3s;
+        position: relative;
+    }
+    .main-wrapper {
+        display: flex;
+        gap: 30px;
+        max-width: 1200px;
+        width: 100%;
+    }
+    .container, .alarm-container {
+        padding: 30px;
+        border-radius: 12px; 
+        box-shadow: 0 6px 15px var(--shadow-color); 
+        background: var(--container-bg); 
+        border: 1px solid var(--input-border);
+        height: fit-content;
+        transition: background 0.3s, border 0.3s, box-shadow 0.3s;
+    }
+    .container { 
+        width: 650px;
+    }
+    .alarm-container {
+        width: 450px;
+        text-align: center;
+    }
+
+    h2 { 
+        color: var(--header-color); 
+        border-bottom: 3px solid #ff9900;
+        padding-bottom: 5px; 
+        margin-bottom: 25px;
+        font-weight: 700;
+    }
+    
+    /* ------------------------------ */
+    /* 4. 계산기 스타일 */
+    /* ------------------------------ */
+    input[type="number"], button:not(#toggleAllButton):not(#resetSelectionSmall):not(#modeToggle) { 
+        width: 100%;
+        padding: 12px; 
+        margin-bottom: 15px; 
+        box-sizing: border-box; 
+        border: 1px solid var(--input-border); 
+        border-radius: 6px; 
+        font-size: 16px; 
+        background-color: var(--input-bg); 
+        color: var(--text-color);
+        transition: background-color 0.3s, color 0.3s, border 0.3s;
+    }
+    .calculate-button { 
+        background-color: #ff9900;
+        color: #1e1e1e; 
+        border: none; 
+        cursor: pointer; 
+        font-weight: 700;
+    }
+    .calculate-button:hover { background-color: #e68a00;
+    }
+    
+    .toggle-all-container {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 15px;
+    }
+    #toggleAllButton, #resetSelectionSmall {
+        color: #1e1e1e;
+        border: none;
+        cursor: pointer;
+        padding: 12px;
+        border-radius: 6px;
+        font-weight: 700;
+        font-size: 16px;
+        transition: background-color 0.3s;
+    }
+    #toggleAllButton {
+        flex-grow: 1;
+        background-color: #00bcd4;
+    }
+    #resetSelectionSmall {
+        flex-shrink: 0;
+        width: 100px; 
+        background-color: #5bc0de;
+    }
+
+    /* === 접기/펼치기 관련 스타일 === */
+    .item-category-header { 
+        font-weight: 700;
+        margin-top: 15px; 
+        border-bottom: 1px dashed var(--input-border); 
+        padding: 5px 10px;
+        cursor: pointer; 
+        user-select: none; 
+        display: flex;
+        justify-content: space-between; 
+        align-items: center;
+        background-color: var(--input-bg); 
+        border-radius: 4px;
+        border: 1px solid var(--input-border);
+        transition: background-color 0.3s, border 0.3s;
+    }
+    
+    .toggle-icon {
+        font-size: 1.2em;
+        margin-left: 10px;
+        font-weight: 900;
+        display: inline-block;
+        transform: rotate(0deg);
+        transition: transform 0.3s ease;
+    }
+    .item-category-header:not(.isCollapsed) .toggle-icon {
+        transform: rotate(0deg);
+    }
+    
+    .item-list-content {
+        padding: 0;
+        overflow: hidden;
+        max-height: 0; 
+        opacity: 0;
+        transition: max-height 0.3s ease-in-out, opacity 0.3s ease-out, padding 0.3s ease-in-out;
+        background-color: #242424;
+    }
+    .item-list-content.expanded {
+        padding: 10px 0 5px 0;
+        max-height: 1000px;
+        opacity: 1;
+    }
+    .item-checkbox-line { 
+        display: inline-block; 
+        width: 31%;
+        margin-right: 2%; 
+        margin-bottom: 5px; 
+        white-space: nowrap; 
+    }
+    
+    input[type="checkbox"] + label {
+        color: var(--text-color);
+        cursor: pointer;
+    }
+    
+    .result-box { 
+        padding: 15px;
+        border-radius: 6px; 
+        border: 1px solid var(--input-border); 
+        background: var(--input-bg); 
+        color: var(--text-color); 
+        display: none;
+    }
+    .result-box h4 {
+        margin-top: 0;
+        margin-bottom: 15px;
+        color: #4CAF50;
+    }
+    /* 재료 목록 스타일 */
+    .recipe-section {
+        margin-top: 15px;
+        /* 헤더와의 간격 조정 */
+        padding: 15px;
+        border: 1px solid var(--input-border);
+        border-radius: 8px;
+        background-color: #242424;
+    }
+    .recipe-section h5 {
+        margin: 0 0 10px 0;
+        padding-bottom: 5px;
+        border-bottom: 2px dashed #ff9900;
+        color: #ff9900;
+        font-weight: 700;
+        font-size: 1.1em;
+    }
+    /* 최종 합산 목록 스타일 (강조) */
+    .final-sum-section {
+        margin-top: 30px;
+        padding: 20px;
+        border: 2px solid #00bcd4; /* 강조 색상 */
+        border-radius: 10px;
+        background-color: #2c2c2c; /* 약간 밝은 배경 */
+    }
+    .final-sum-section h5 {
+        margin: 0 0 15px 0;
+        /* 아래 간격 늘림 */
+        padding-bottom: 5px;
+        border-bottom: 2px solid #00bcd4;
+        color: #00bcd4;
+        font-weight: 700;
+        font-size: 1.2em; /* 폰트 사이즈 키움 */
+    }
+
+    /* === 개별 품목 재료 스타일 === */
+    .material-item {
+        display: flex;
+        justify-content: space-between;
+        padding: 5px 0;
+        border-bottom: 1px dotted #444;
+    }
+    .material-item:last-child {
+        border-bottom: none;
+    }
+
+    /* === 최종 합산 재료 (체크박스 포함) 스타일 - 사용자 요청 반영 === */
+    .final-material-item {
+        display: flex;
+        align-items: center; /* 수직 정렬 중앙 */
+        padding: 5px 0;
+        border-bottom: 1px dotted #444;
+    }
+    .final-material-item:last-child {
+        border-bottom: none;
+    }
+    .final-material-info {
+        display: flex;
+        justify-content: space-between;
+        flex-grow: 1;
+        /* 남은 공간 차지 */
+        margin-left: 10px;
+        /* 체크박스와 간격 */
+    }
+    .material-name {
+        font-weight: 400;
+    }
+    .material-amount {
+        font-weight: bold;
+        color: #FFFFFF;
+    }
+    input[type="checkbox"].material-checkbox {
+        width: 18px;
+        /* 체크박스 크기 조정 */
+        height: 18px;
+        flex-shrink: 0;
+        /* 크기 유지 */
+        cursor: pointer;
+        margin: 0;
+    }
+
+    /* ------------------------------ */
+    /* 5. 시계 스타일 */
+    /* ------------------------------ */
+    #clockDisplay { 
+        background: linear-gradient(145deg, var(--input-bg), var(--container-bg));
+        border: 1px solid var(--input-border);
+        border-radius: 15px;
+        padding: 20px;
+        margin-bottom: 30px;
+        box-shadow: 0 8px 16px var(--shadow-color);
+        transition: all 0.3s;
+    }
+    
+    /* 시계 텍스트 공통 스타일 */
+    #currentTime, #nextAlarmTime, #countdownLabel {
+        font-weight: 800;
+        text-shadow: 1px 1px 3px rgba(0,0,0,0.2);
+    }
+
+    /* 다크 모드 시 시계 텍스트 색상 */
+    .dark-mode #currentTime, 
+    .dark-mode #nextAlarmTime, 
+    .dark-mode #countdownLabel {
+        color: var(--clock-text-color-dark);
+    }
+
+    /* 밝은 모드 시 시계 텍스트 색상 - 수정된 부분 */
+    .light-mode #currentTime, 
+    .light-mode #nextAlarmTime, 
+    .light-mode #countdownLabel {
+        color: var(--clock-text-color-light);
+        text-shadow: none; /* 밝은 모드에서는 그림자 제거 */
+    }
+
+    #currentTime {
+        font-size: 2.8em;
+        margin-bottom: 5px;
+    }
+    #nextAlarmTime {
+        font-size: 1.1em;
+        font-weight: 600;
+        margin-bottom: 25px;
+    }
+    
+    #countdownLabel { 
+        font-size: 0.9em;
+        font-weight: 700;
+        margin-bottom: 5px;
+    }
+
+    /* 카운트다운 타이머 (수량, 테두리 색상 변경) */
+    #countdownTimer {
+        font-size: 3.5em;
+        font-weight: 900;
+        color: var(--countdown-color); /* 변경된 하늘색 적용 */
+        border: 5px solid var(--countdown-color);
+        /* 변경된 하늘색 적용 */
+        border-radius: 12px;
+        padding: 15px 30px;
+        display: inline-block;
+        background: var(--input-bg); 
+        box-shadow: inset 0 2px 5px var(--shadow-color);
+        transition: background 0.3s, box-shadow 0.3s, border-color 0.3s;
+    }
+    
+    /* ------------------------------ */
+    /* 6. 모드 전환 버튼 스타일 */
+    /* ------------------------------ */
+    #modeToggle {
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        background: var(--input-bg);
+        color: var(--text-color);
+        border: 2px solid var(--input-border);
+        border-radius: 50%;
+        width: 40px;
+        height: 40px;
+        font-size: 20px;
+        cursor: pointer;
+        line-height: 1;
+        box-shadow: 0 2px 5px var(--shadow-color);
+        transition: all 0.3s;
+        z-index: 100;
+    }
+
+</style>
+</head>
+<body class="dark-mode">
+
+<button id="modeToggle" onclick="toggleMode()">🌙</button>
+
+<div class="main-wrapper">
+
+    <div class="container">
+        <h2>Mabinogi Mobile 가공 계산기 [잔월]</h2>
+        
+        <label class="category-label">가공할 품목 선택 (다중선택 가능):</label>
+        
+        <div class="toggle-all-container">
+            <button id="toggleAllButton" onclick="toggleAllCategories()" data-expanded="false" style="background-color: #00bcd4;">
+                모두 펼치기 ▼
+            </button>
+             <button id="resetSelectionSmall" onclick="resetSelection()">
+                초기화 🔄
+            </button>
+        </div>
+        
+        <div id="itemSelection" class="item-selection-container">
+        </div>
+        
+        <div class="input-group">
+            <label class="category-label" style="color: var(--text-color);">목표 제작 개수:</label>
+            <input type="number" id="targetCount" value="1" min="1" placeholder="목표 개수를 입력하세요 (예: 30)">
+            <button class="calculate-button" onclick="calculateByCount()">✨ 개수 기반 재료 합산 계산</button>
+            <div id="resultCount" class="result-box"></div> 
+        </div>
+
+        <div class="input-group">
+            <label class="category-label" style="color: var(--text-color);">목표 제작 횟수 (시도 횟수):</label>
+            <input type="number" id="craftAttempts" value="1" min="1" placeholder="제작 횟수를 입력하세요 (예: 5)">
+            <button class="calculate-button" onclick="calculateByAttempts()">✨ 횟수 기반 재료 합산 계산</button>
+            <div id="resultAttempts" class="result-box"></div>
+        </div>
+    </div>
+
+    <div class="alarm-container">
+        <h2>Mabinogi Mobile [결계]</h2>
+     
+        <div id="clockDisplay">
+            <div id="currentTime">--:--:--</div>
+            
+            <div id="nextAlarmTime">다음 결계 소환: <strong>--:00</strong></div>
+
+            <div id="countdownLabel">다음 결계까지 남은 시간</div>
+            <div id="countdownTimer">00:00</div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // ==========================================================
+    // 1. 레시피 데이터베이스 및 색상 정의
+    // ==========================================================
+    const recipes = {
+        "metal": { group: "금속 가공", items: {
+            "iron_ingot": { name: "철괴", yield: 3, ingredients: { "철 광석": 10 } }, 
+            "steel_ingot": { name: "강철괴", yield: 3, ingredients: { "철괴": 3, "석탄": 4 } },
+            "alloy_steel_ingot": { name: "합금강괴", yield: 3, ingredients: { "강철괴": 3, "동 광석": 15, "석탄": 8 } },
+            "special_steel_ingot": { name: "특수강괴", yield: 3, ingredients: { "합금강괴": 4, "백동 광석": 20, "석탄": 12 } },
+            "silver_alloy_ingot": { name: "은합금괴", yield: 3, ingredients: { "특수강괴": 5, "은 광석": 20, "석탄": 16 } },
+            "unrefined_iron_ingot": { name: "운철괴", yield: 3, ingredients: { "은합금괴": 5, "운철 광석": 20, "석탄": 20 } },
+            "tar": { name: "타르", yield: 5, ingredients: { "통나무": 50, "점토": 25 } }
+        }},
+        "wood": { group: "목재 가공", items: {
+            "lumber": { name: "목재", yield: 3, ingredients: { "통나무": 10 } }, 
+            "lumber_plus": { name: "목재+", yield: 3, ingredients: { "목재": 3, "나무 진액": 4 } },
+            "advanced_lumber": { name: "상급 목재", yield: 3, ingredients: { "목재+": 3, "상급 통나무": 15, "나무 진액": 8 } },
+            "advanced_lumber_plus": { name: "상급 목재+", yield: 3, ingredients: { "상급 목재": 4, "상급 통나무+": 20, "나무 진액": 12 } },
+            "soft_lumber": { name: "부드러운 목재", yield: 3, ingredients: { "상급 목재+": 15, "부드러운 통나무": 30, "나무 진액": 30 } },
+            "hard_lumber": { name: "단단한 목재", yield: 3, ingredients: { "상급 목재+": 15, "단단한 통나무": 30, "나무 진액": 30 } },
+            "premium_lumber": { name: "최상급 목재", yield: 3, ingredients: { "상급 목재+": 5, "최상급 통나무": 20, "나무 진액": 16 } },
+            "premium_lumber_plus": { name: "최상급 목재+", yield: 3, ingredients: { "최상급 목재": 5, "최상급 통나무+": 20, "나무 진액": 20 } }
+        }},
+        "leather": { group: "가죽 가공", items: {
+            "leather_item": { name: "가죽", yield: 3, ingredients: { "생가죽": 10 } }, 
+            "leather_plus": { name: "가죽+", yield: 3, ingredients: { "가죽": 3, "타닌 가루": 4 } },
+            "advanced_leather": { name: "상급 가죽", yield: 3, ingredients: { "가죽+": 3, "상급 생가죽": 15, "타닌 가루": 8 } },
+            "advanced_leather_plus": { name: "상급 가죽+", yield: 3, ingredients: { "상급 가죽": 4, "상급 생가죽+": 20, "타닌 가루": 12 } },
+            "premium_leather": { name: "최상급 가죽", yield: 3, ingredients: { "상급 가죽+": 5, "최상급 생가죽": 20, "타닌 가루": 16 } },
+            "premium_leather_plus": { name: "최상급 가죽+", yield: 3, ingredients: { "최상급 가죽": 5, "최상급 생가죽+": 20, "타닌 가루": 20 } }
+        }},
+        "cloth": { group: "옷감 가공", items: {
+            "cloth_item": { name: "옷감", yield: 3, ingredients: { "양털": 10 } }, 
+            "silk": { name: "실크", yield: 2, ingredients: { "거미줄": 10 } },
+            "cloth_plus": { name: "옷감+", yield: 3, ingredients: { "옷감": 3, "양털": 4 } },
+            "advanced_cloth": { name: "상급 옷감", yield: 3, ingredients: { "옷감+": 3, "상급 양털": 15, "양털": 8 } },
+            "thick_cloth": { name: "두꺼운 옷감", yield: 3, ingredients: { "두꺼운 양털": 50, "상급 양털": 100, "밀랍": 2 } },
+            "advanced_silk": { name: "상급 실크", yield: 2, ingredients: { "실크": 4, "튼튼 버섯 진액": 8 } },
+            "advanced_cloth_plus": { name: "상급 옷감+", yield: 3, ingredients: { "상급 옷감": 4, "상급 양털+": 20, "양털": 12 } },
+            "plant_fiber": { name: "식물 섬유", yield: 10, ingredients: { "긴 줄기": 150 } },
+            "rope": { name: "밧줄", yield: 3, ingredients: { "식물 섬유": 45, "밀랍": 4 } },
+            "premium_cloth": { name: "최상급 옷감", yield: 3, ingredients: { "상급 옷감+": 5, "최상급 양털": 20, "양털": 16 } },
+            "premium_silk": { name: "최상급 실크", yield: 2, ingredients: { "상급 실크": 4, "최상급 거미줄": 20, "튼튼 버섯 진액": 16 } },
+            "sturdy_rope": { name: "튼튼한 밧줄", yield: 3, ingredients: { "밧줄": 6, "식물 섬유": 90, "밀랍": 8, "타르": 3 } },
+            "premium_cloth_plus": { name: "최상급 옷감+", yield: 3, ingredients: { "최상급 옷감": 5, "최상급 양털+": 20, "양털": 20 } }
+        }},
+        "medicine": { group: "약품 가공", items: {
+            "saerok_extract": { name: "새록 버섯 진액", yield: 5, ingredients: { "새록 버섯 포자": 10, "물이 든 병": 1 } }, 
+            "strong_powder": { name: "튼튼 버섯 가루", yield: 5, ingredients: { "튼튼 버섯": 20 } },
+            "strong_extract": { name: "튼튼 버섯 진액", yield: 5, ingredients: { "튼튼 버섯 포자": 10, "물이 든 병": 1 } },
+            "glimmer_crystal": { name: "광휘의 결정(유령 반딧불이)", yield: 3, ingredients: { "유령 반딧불이": 3, "마나 허브": 10, "점토": 3 } },
+            "saerok_spore": { name: "새록 버섯 포자", yield: 15, ingredients: { "새록 버섯": 30, "종이": 3 } },
+            "strong_spore": { name: "튼튼 버섯 포자", yield: 15, ingredients: { "튼튼 버섯": 30, "종이": 3 } },
+            "suksuk_spore": { name: "쑥쑥 버섯 포자", yield: 15, ingredients: { "쑥쑥 버섯": 30, "종이": 3 } },
+            "suksuk_extract": { name: "쑥쑥 버섯 진액", yield: 5, ingredients: { "쑥쑥 버섯 포자": 10, "물이 든 병": 1 } },
+            "flame_crystal": { name: "불꽃의 결정(석양 나비)", yield: 3, ingredients: { "석양나비": 3, "마나 허브": 10, "점토": 3 } },
+            "glue": { name: "아교", yield: 5, ingredients: { "상급 생가죽": 30, "물이 든 병": 10 } },
+            "hiding_powder": { name: "숨숨꽃 가루", yield: 5, ingredients: { "숨숨꽃": 20 } },
+            "clean_spore": { name: "깔끔 버섯 포자", yield: 15, ingredients: { "깔끔 버섯": 30, "종이": 3 } },
+            "clean_extract": { name: "깔끔 버섯 진액", yield: 5, ingredients: { "깔끔 버섯 포자": 10, "물이 든 병": 1 } },
+            "ice_crystal": { name: "얼음의 결정(흰얼음풍뎅이)", yield: 3, ingredients: { "흰얼음풍뎅이": 3, "마나 허브": 10, "점토": 3 } },
+            "magic_catalyst": { name: "마력 기폭제", yield: 10, ingredients: { "마력이 깃든 돌": 50, "마나 허브": 50, "반짝이는 이끼": 25 } },
+            "sealed_fragment_anger": { name: "봉인된 분노의 파편", yield: 10, ingredients: { "분노의 파편": 10, "종이": 10, "봉인의 결정": 5 } },
+            "sealed_fragment_oblivion": { name: "봉인된 망각의 파편", yield: 10, ingredients: { "망각의 파편": 10, "종이": 10, "봉인의 결정": 5 } },
+            "sealed_fragment_wild": { name: "봉인된 야성의 파편", yield: 10, ingredients: { "야성의 파편": 10, "종이": 10, "봉인의 결정": 5 } },
+            "wound_powder": { name: "생채기꽃 가루", yield: 5, ingredients: { "생채기꽃": 20 } },
+            "boost_spore": { name: "증폭 버섯 포자", yield: 15, ingredients: { "증폭 버섯": 30, "종이": 3 } },
+            "boost_extract": { name: "증폭 버섯 진액", yield: 5, ingredients: { "증폭 버섯 포자": 10, "쑥쑥 버섯 진액": 10 } }, 
+            "electric_crystal": { name: "전기의 결정(낙엽나방)", yield: 3, ingredients: { "낙엽나방": 3, "마나 허브": 10, "점토": 3 } }, 
+            "soothing_powder": { name: "진정초 가루", yield: 5, ingredients: { "진정초": 20 } },
+            "solsol_spore": { name: "솔솔 버섯 포자", yield: 15, ingredients: { "솔솔 버섯": 30, "종이": 3 } },
+            "solsol_extract": { name: "솔솔 버섯 진액", yield: 5, ingredients: { "솔솔 버섯 포자": 10, "새록 버섯 진액": 10 } },
+            "sealed_crystal_twilight": { name: "봉인의 결정(황혼잠자리)", yield: 3, ingredients: { "황혼잠자리": 3, "마나 허브": 10, "점토": 3 } },
+            "illusion_powder": { name: "환영 가루", yield: 5, ingredients: { "벼락 맞은 나뭇가지": 20, "나비잠자리": 10 } }
+        }},
+        "food": { group: "식재료 가공", items: {
+            "mayonnaise": { name: "마요네즈", yield: 3, ingredients: { "달걀": 10, "식용유": 2 } }, 
+            "flour": { name: "밀가루", yield: 3, ingredients: { "밀": 15 } }, 
+            "cheese": { name: "치즈", yield: 3, ingredients: { "우유": 6, "소금": 1 } },
+            "noodle": { name: "면", yield: 3, ingredients: { "밀가루": 3, "달걀": 5, "물이 든 병": 1 } },
+            "fresh_cream": { name: "생크림", yield: 3, ingredients: { "우유": 12, "달걀": 6, "설탕": 2 } },
+            "soaked_beans": { name: "물에 불린 콩", yield: 5, ingredients: { "콩": 30, "물이 든 병": 3 } },
+            "tofu": { name: "두부", yield: 3, ingredients: { "물에 불린 콩": 3, "물이 든 병": 3, "소금": 2, "옷감": 3 } }, 
+            "soy_milk": { name: "두유", yield: 3, ingredients: { "물에 불린 콩": 3, "물이 든 병": 3, "소금": 1, "식용유": 1 } }, 
+            "aged_large_meat": { name: "숙성된 커다란 고기", yield: 1, ingredients: { "커다란 고기": 1, "허브": 6, "마늘": 2, "소금": 2, "후추": 1 } },
+            "soaked_rice": { name: "물에 불린 쌀", yield: 5, ingredients: { "쌀": 30, "물이 든 병": 6 } }, 
+            "rice_cooked": { name: "밥", yield: 3, ingredients: { "물에 불린 쌀": 8, "물이 든 병": 2 } }, 
+            "dried_tea_leaf": { name: "말린 찻잎", yield: 3, ingredients: { "찻잎": 30 } },
+            "fermented_tea_leaf": { name: "발효된 찻잎", yield: 3, ingredients: { "말린 찻잎": 5, "옷감": 1 } }
+        }}
+    };
+
+    // 카테고리별 색상 정의
+    const categoryColors = {
+        "metal": "#FFD700", // 금속: 골드
+        "wood": "#8B4513", // 목재: 흙갈색
+        "leather": "#D2691E", // 가죽: 오렌지 브라운
+        "cloth": "#00BCD4", // 옷감: 청록색
+        "medicine": "#4CAF50", // 약품: 그린
+        "food": "#FF9800" // 식재료: 오렌지
+    };
+
+    // ==========================================================
+    // 2. 가공 계산기 핵심 기능 함수
+    // ==========================================================
+
+    function initializeItemSelector() {
+        const container = document.getElementById('itemSelection');
+        let html = '';
+
+        for (const categoryKey in recipes) {
+            const category = recipes[categoryKey];
+            const contentId = `content-${categoryKey}`;
+            const headerColor = categoryColors[categoryKey];
+
+            // 아이콘을 항상 표시하고 isCollapsed 클래스를 통해 접힘/펼침 상태를 제어
+            html += `<div class="item-category-header isCollapsed" id="header-${contentId}" onclick="toggleCategory('${contentId}', this)" style="border-left: 5px solid ${headerColor};">
+                        ${category.group}
+                        <span class="toggle-icon">+</span>
+                     </div>
+                    <div class="item-list-content" id="${contentId}" style="max-height: 0px; opacity: 0;">`;
+            
+            let itemCount = 0;
+            for (const itemKey in category.items) {
+                const item = category.items[itemKey];
+                const itemId = `${categoryKey}|${itemKey}`;
+                
+                html += `<div class="item-checkbox-line">
+                            <input type="checkbox" id="${itemId}" name="selectedItems" value="${itemId}">
+                            <label for="${itemId}">${item.name}</label>
+                         </div>`;
+                itemCount++;
+            }
+
+            html += `</div>`;
+        }
+
+        container.innerHTML = html;
+    }
+
+    function toggleCategory(contentId, headerElement) {
+        const content = document.getElementById(contentId);
+        const icon = headerElement.querySelector('.toggle-icon');
+        
+        // max-height가 '0px'이거나 빈 문자열이면 접힌 상태로 간주
+        const isCollapsed = content.style.maxHeight === '0px' || content.style.maxHeight === '';
+
+        if (isCollapsed) {
+            // 펼치기
+            // scrollHeight를 사용하여 내용 높이를 정확히 맞추고 CSS 트랜지션을 활용
+            content.style.maxHeight = content.scrollHeight + 'px';
+            content.style.opacity = '1';
+            content.classList.add('expanded');
+            headerElement.classList.remove('isCollapsed');
+            icon.textContent = '-';
+        } else {
+            // 접기
+            // 애니메이션을 위해 max-height를 먼저 0으로 설정
+            content.style.maxHeight = '0px';
+            content.style.opacity = '0';
+            content.classList.remove('expanded');
+            headerElement.classList.add('isCollapsed');
+            icon.textContent = '+';
+        }
+    }
+
+    function toggleAllCategories() {
+        const button = document.getElementById('toggleAllButton');
+        const isCurrentlyExpanded = button.getAttribute('data-expanded') === 'true';
+        const allContent = document.querySelectorAll('.item-list-content');
+        const allCategoryHeaders = document.querySelectorAll('.item-category-header');
+        
+        if (isCurrentlyExpanded) {
+            // 모두 접기
+            allContent.forEach(content => {
+                content.style.maxHeight = '0px';
+                content.style.opacity = '0';
+                content.classList.remove('expanded');
+            });
+            allCategoryHeaders.forEach(header => {
+                const icon = header.querySelector('.toggle-icon');
+                if (icon) icon.textContent = '+'; // +
+                header.classList.add('isCollapsed');
+            });
+            button.textContent = '모두 펼치기 ▼';
+            button.setAttribute('data-expanded', 'false');
+        } else {
+            // 모두 펼치기
+            allContent.forEach(content => {
+                // scrollHeight를 사용하여 정확한 높이 설정 (트랜지션에 필요)
+                content.style.maxHeight = content.scrollHeight + 'px';
+                content.style.opacity = '1';
+                content.classList.add('expanded');
+            });
+            allCategoryHeaders.forEach(header => {
+                const icon = header.querySelector('.toggle-icon');
+                if (icon) icon.textContent = '-'; // -
+                header.classList.remove('isCollapsed');
+            });
+            button.textContent = '모두 접기 ▶';
+            button.setAttribute('data-expanded', 'true');
+        }
+    }
+
+    function resetSelection() {
+        const selectedCheckboxes = document.querySelectorAll('input[name="selectedItems"]:checked');
+        selectedCheckboxes.forEach(checkbox => {
+            checkbox.checked = false;
+        });
+        // 체크박스 상태도 초기화
+        const materialCheckboxes = document.querySelectorAll('input[type="checkbox"].material-checkbox');
+        materialCheckboxes.forEach(checkbox => {
+            checkbox.checked = false;
+        });
+        document.getElementById('resultCount').style.display = 'none';
+        document.getElementById('resultAttempts').style.display = 'none';
+        alert("선택한 품목 및 재료 체크 상태가 모두 초기화되었습니다.");
+    }
+
+    function getSelectedRecipes() {
+        const selectedCheckboxes = document.querySelectorAll('input[name="selectedItems"]:checked');
+        const selectedItems = [];
+
+        selectedCheckboxes.forEach(checkbox => {
+            const [categoryKey, itemKey] = checkbox.value.split('|');
+            const recipe = recipes[categoryKey]?.items[itemKey];
+            if (recipe) {
+                selectedItems.push({ recipe: recipe, id: checkbox.value, name: recipe.name });
+            }
+        });
+        return selectedItems;
+    }
+
+    /**
+     * 특정 품목의 재료를 계산하고 필요한 정보를 반환 (재료를 하위 원재료로 분해하지 않음)
+     * @param {Object} item - 선택된 품목 객체
+     * @param {number} multiplier - 시도 횟수 또는 제작 개수
+     * @param {boolean} isCountBased - 개수 기반인지 여부
+     */
+    function calculateSingleItemMaterials(item, multiplier, isCountBased) {
+        const recipe = item.recipe;
+        let attempts;
+        let expectedCount;
+
+        if (isCountBased) {
+            // 개수 기반: 목표 개수를 채우기 위한 최소 시도 횟수 계산
+            attempts = Math.ceil(multiplier / recipe.yield);
+            expectedCount = recipe.yield * attempts;
+        } else {
+            // 횟수 기반: 시도 횟수에 따른 예상 제작 개수
+            attempts = multiplier;
+            expectedCount = recipe.yield * attempts;
+        }
+
+        // 재료 계산 및 HTML 생성
+        const calculatedMaterials = {};
+        let materialsHtml = '';
+        
+        // 레시피의 '직접' 재료만 사용 (재료를 하위 원재료로 분해하지 않음)
+        for (const material in recipe.ingredients) {
+            const required = recipe.ingredients[material] * attempts;
+            calculatedMaterials[material] = required;
+            
+            materialsHtml += `
+                <div class="material-item">
+                    <span class="material-name">${material}</span>
+                    <span class="material-amount">${required.toLocaleString()} 개</span>
+                </div>
+            `;
+        }
+
+        // 품목별 헤더 텍스트 설정
+        const headerText = isCountBased 
+            ? `${item.name} (목표: ${multiplier.toLocaleString()}개, 시도: ${attempts.toLocaleString()}회, 예상 제작: ${expectedCount.toLocaleString()}개)` 
+            : `${item.name} (목표 시도: ${attempts.toLocaleString()}회, 예상 제작: ${expectedCount.toLocaleString()}개)`;
+        return {
+            html: `
+                <div class="recipe-section">
+                    <h5>${headerText}</h5>
+                    ${materialsHtml}
+                </div>
+            `,
+            attempts: attempts,
+            expectedCount: expectedCount,
+            materials: calculatedMaterials // 합산에 사용할 재료 목록 반환 (직접 재료만 포함)
+        };
+    }
+
+    /**
+     * 최종 합산 재료 목록을 생성하는 함수
+     * @param {Array<Object>} allCalculatedMaterials - 모든 품목의 직접 재료 목록 배열
+     * * [수정된 로직 적용]: 섹션 1에 표시된 '직접 재료'만 합산
+     */
+    function createFinalSumHtml(allCalculatedMaterials) {
+        const aggregatedMaterials = {};
+        // 모든 재료 합산
+        allCalculatedMaterials.forEach(itemMaterials => {
+            for (const material in itemMaterials) {
+                if (aggregatedMaterials[material]) {
+                    aggregatedMaterials[material] += itemMaterials[material];
+                } else {
+                    aggregatedMaterials[material] = itemMaterials[material];
+                }
+            }
+        });
+        // HTML 생성
+        let finalHtml = '';
+        const sortedMaterials = Object.keys(aggregatedMaterials).sort();
+        // 사용자 요청: 최종 합산 목록에 체크박스 추가
+        sortedMaterials.forEach((material, index) => {
+            const required = aggregatedMaterials[material];
+            const uniqueId = `mat-check-${index}`; // Unique ID for checkbox
+            finalHtml += `
+                <div class="final-material-item">
+                    <input type="checkbox" id="${uniqueId}" class="material-checkbox">
+                    <label for="${uniqueId}" class="final-material-info">
+                        <span class="material-name">${material}</span>
+                        <span class="material-amount">${required.toLocaleString()} 개</span>
+                    </label>
+                </div>
+            `;
+        });
+        if (finalHtml) {
+            // 사용자 요청: 제목 수정 (모든 선택 품목 제작을 위한 직접 재료 총합 -> 가공품 재료 총합)
+            return `
+                <div class="final-sum-section">
+                    <h5>가공품 재료 총합</h5>
+                    ${finalHtml}
+                </div>
+            `;
+        }
+        return '';
+    }
+
+    function calculateByCount() {
+        const selectedRecipes = getSelectedRecipes();
+        const targetCount = parseInt(document.getElementById('targetCount').value);
+        const resultBox = document.getElementById('resultCount');
+
+        if (selectedRecipes.length === 0 || targetCount <= 0 || isNaN(targetCount)) {
+            resultBox.innerHTML = "<h4 style='color:red;'>⚠️ 1개 이상의 품목을 선택하고 유효한 목표 개수를 입력하세요.</h4>";
+            resultBox.style.display = 'block';
+            return;
+        }
+
+        let totalAttempts = 0;
+        let totalExpectedResultCount = 0;
+        let detailedResultsHtml = '';
+        const allMaterials = [];
+
+        selectedRecipes.forEach(item => {
+            const result = calculateSingleItemMaterials(item, targetCount, true);
+            detailedResultsHtml += result.html;
+            totalAttempts += result.attempts;
+            totalExpectedResultCount += result.expectedCount;
+            allMaterials.push(result.materials);
+        });
+        const finalSumHtml = createFinalSumHtml(allMaterials);
+
+        // 사용자 요청: 제목 수정 (1. 선택 품목별 직접 재료 목록 (분해하지 않음) -> 가공품 재료 목록)
+        resultBox.innerHTML = `
+            <h4 style="color: #4CAF50;">✔️ ${targetCount.toLocaleString()}개 목표 제작 결과 요약</h4>
+            <p><strong>총 예상 제작 개수 합계:</strong> ${totalExpectedResultCount.toLocaleString()} 개</p>
+            <p><strong>모든 품목 총 시도 횟수 합계:</strong> ${totalAttempts.toLocaleString()} 회</p>
+            
+            <h5 style="font-weight: bold; margin-bottom: 15px; margin-top:20px; border-bottom: 2px solid #ff9900; padding-bottom: 5px; color: #ff9900;">가공품 재료 목록</h5>
+            ${detailedResultsHtml}
+            
+            ${finalSumHtml}
+        `;
+        resultBox.style.display = 'block';
+        document.getElementById('resultAttempts').style.display = 'none';
+    }
+
+    function calculateByAttempts() {
+        const selectedRecipes = getSelectedRecipes();
+        const craftAttempts = parseInt(document.getElementById('craftAttempts').value);
+        const resultBox = document.getElementById('resultAttempts');
+
+        if (selectedRecipes.length === 0 || craftAttempts <= 0 || isNaN(craftAttempts)) {
+            resultBox.innerHTML = "<h4 style='color:red;'>⚠️ 1개 이상의 품목을 선택하고 유효한 횟수를 입력하세요.</h4>";
+            resultBox.style.display = 'block';
+            return;
+        }
+
+        let totalExpectedResultCount = 0;
+        let detailedResultsHtml = '';
+        const allMaterials = [];
+
+        // 횟수 기반 계산은 각 품목당 동일 횟수 (craftAttempts)를 시도한다고 가정
+        selectedRecipes.forEach(item => {
+            const result = calculateSingleItemMaterials(item, craftAttempts, false);
+            detailedResultsHtml += result.html;
+            totalExpectedResultCount += result.expectedCount;
+            allMaterials.push(result.materials);
+        });
+        const finalSumHtml = createFinalSumHtml(allMaterials);
+
+        // 사용자 요청: 제목 수정 (1. 선택 품목별 직접 재료 목록 (분해하지 않음) -> 가공품 재료 목록)
+        resultBox.innerHTML = `
+            <h4 style="color: #4CAF50;">✔️ ${craftAttempts.toLocaleString()}회 시도 시 예상 결과 요약</h4>
+            <p><strong>총 예상 제작 개수 합계:</strong> ${totalExpectedResultCount.toLocaleString()} 개</p>
+            <p><strong>총 시도 횟수:</strong> ${craftAttempts.toLocaleString()} 회 (선택 품목당)</p>
+            
+            <h5 style="font-weight: bold; margin-bottom: 15px; margin-top:20px; border-bottom: 2px solid #ff9900; padding-bottom: 5px; color: #ff9900;">가공품 재료 목록</h5>
+            ${detailedResultsHtml}
+            
+            ${finalSumHtml}
+        `;
+        resultBox.style.display = 'block';
+        document.getElementById('resultCount').style.display = 'none';
+    }
+
+    // ==========================================================
+    // 3. 시계 기능 (단순 시간 표시 및 카운트다운)
+    // ==========================================================
+
+    let clockInterval;
+    let countdownInterval;
+
+    function updateClock() {
+        const now = new Date();
+        const currentMinutes = now.getMinutes();
+        const currentHour = now.getHours();
+        const currentSeconds = now.getSeconds();
+        // 1. 현재 시간 표시 (HH:MM:SS)
+        const hourStr = String(currentHour).padStart(2, '0');
+        const minuteStr = String(currentMinutes).padStart(2, '0');
+        const secondStr = String(currentSeconds).padStart(2, '0');
+        document.getElementById('currentTime').textContent = `${hourStr}:${minuteStr}:${secondStr}`;
+        // 2. 다음 정각 소환 시간 설정 및 표시 (사용자 요청: 다음 정각 H:00)
+        const nextAlarmTime = new Date(now);
+        // 현재 시간을 복사
+        // 다음 정각으로 설정 (H+1시 00분 00초)
+        nextAlarmTime.setHours(now.getHours() + 1, 0, 0, 0);
+        // 3. 카운트다운 계산
+        const diff = nextAlarmTime.getTime() - now.getTime();
+        const totalSeconds = Math.max(0, Math.floor(diff / 1000));
+        
+        const minutes = Math.floor(totalSeconds / 60);
+        const seconds = totalSeconds % 60;
+        const minutesStr = String(minutes).padStart(2, '0');
+        const secondsStr = String(seconds).padStart(2, '0');
+        // 카운트다운 표시
+        document.getElementById('countdownTimer').textContent = `${minutesStr}:${secondsStr}`;
+        // 다음 소환 시간 표시 (00분)
+        document.getElementById('nextAlarmTime').innerHTML = `다음 결계 소환: <strong>${String(nextAlarmTime.getHours()).padStart(2, '0')}:00</strong>`;
+        // 정각까지 10초 남았을 때 글자 색을 빨간색으로 변경
+        const isNear = totalSeconds > 0 && totalSeconds <= 10;
+        document.getElementById('countdownTimer').style.color = isNear ? '#FF4500' : 'var(--countdown-color)';
+        document.getElementById('countdownTimer').style.borderColor = isNear ? '#FF4500' : 'var(--countdown-color)';
+    }
+
+    function startClockInterval() {
+        // 1초마다 시계 업데이트
+        updateClock();
+        clockInterval = setInterval(updateClock, 1000);
+    }
+    
+    // ==========================================================
+    // 4. 테마 전환 기능
+    // ==========================================================
+    function toggleMode() {
+        const body = document.body;
+        const toggleButton = document.getElementById('modeToggle');
+
+        if (body.classList.contains('dark-mode')) {
+            // 다크 -> 밝은 모드 전환
+            body.classList.remove('dark-mode');
+            body.classList.add('light-mode');
+            toggleButton.textContent = '☀️'; // 아이콘 변경
+            localStorage.setItem('mode', 'light');
+        } else {
+            // 밝은 -> 다크 모드 전환
+            body.classList.remove('light-mode');
+            body.classList.add('dark-mode');
+            toggleButton.textContent = '🌙'; // 아이콘 변경
+            localStorage.setItem('mode', 'dark');
+        }
+    }
+
+    // ==========================================================
+    // 5. 초기화 및 모드 로드
+    // ==========================================================
+    window.onload = function() {
+        // 1. 항목 선택기 초기화 및 색상 적용
+        initializeItemSelector();
+        // 2. 시계 시작
+        startClockInterval();
+        // 3. 저장된 모드 로드
+        const savedMode = localStorage.getItem('mode') || 'dark';
+        // 기본값은 dark
+        const body = document.body;
+        const toggleButton = document.getElementById('modeToggle');
+        if (savedMode === 'light') {
+            body.classList.add('light-mode');
+            body.classList.remove('dark-mode');
+            toggleButton.textContent = '☀️';
+        } else {
+            body.classList.add('dark-mode');
+            body.classList.remove('light-mode');
+            toggleButton.textContent = '🌙';
+        }
+    }
+
+</script>
+</body>
+</html>
