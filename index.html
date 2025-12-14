@@ -16,12 +16,11 @@
         --container-bg: rgba(38, 38, 38, 0.7); 
         --text-color: #e0e0e0;
         --header-color: #FFFFFF;
-        --input-bg: rgba(38, 38, 38, 0.8); 
-        
+        --input-bg: rgba(38, 38, 38, 0.8);
         /* 강조 색상 (채도 낮춤) */
-        --accent-primary: #59C9A5;
+        --accent-primary: #59C9A5; 
         /* 청록색 */
-        --accent-secondary: #FFAB40;
+        --accent-secondary: #FFAB40; 
         /* 주황색 */
         --countdown-color: #03A9F4; 
         --success-color: #4CAF50;
@@ -46,7 +45,6 @@
         --input-bg: rgba(229, 229, 229, 0.8);
         --accent-primary: #009688;
         --accent-secondary: #ff8800;
-
         /* 네오모피즘 그림자 정의 (라이트 모드) */
         --shadow-dark: rgba(174, 174, 192, 0.6);
         --shadow-light: rgba(255, 255, 255, 1);
@@ -246,7 +244,7 @@
     }
 
     .item-checkbox-line { 
-        display: inline-block; 
+        display: inline-block;
         width: 48%;
         margin-right: 2%;
         margin-bottom: 4px; 
@@ -264,7 +262,7 @@
         padding-left: 18px;
         user-select: none;
         display: inline-block;
-        font-size: 0.85em; 
+        font-size: 0.85em;
     }
 
     input[type="checkbox"] + label:before {
@@ -396,6 +394,23 @@
         box-shadow: var(--main-shadow);
         transition: all 0.3s;
     }
+
+    /* === 추가된 부분: 시각적 알람 효과 === */
+    @keyframes alarmBlink {
+        0% { background-color: var(--accent-secondary);
+        transform: scale(1.02); }
+        50% { background-color: var(--container-bg); transform: scale(1.0);
+        }
+        100% { background-color: var(--accent-secondary); transform: scale(1.02);
+        }
+    }
+    
+    #clockDisplay.alarm-blinking {
+        animation: alarmBlink 0.5s infinite alternate;
+        border: 3px solid var(--accent-secondary);
+        box-shadow: 0 0 15px var(--accent-secondary);
+    }
+    /* ==================================== */
     
     #currentTime, #nextAlarmTime, #countdownLabel {
         font-weight: 800;
@@ -484,6 +499,7 @@
         <div class="toggle-all-container">
             <button id="toggleAllButton" onclick="toggleAllCategories()" data-expanded="false" style="background-color: var(--accent-primary);">
                 모두 펼치기 ▼
+    
             </button>
              <button id="resetSelectionSmall" onclick="resetSelection()" style="background-color: var(--accent-primary);">
                 초기화 🔄
@@ -493,6 +509,7 @@
         <div id="itemSelection" class="item-selection-container">
         </div>
         
+    
         <div class="input-group">
             <label class="category-label" style="color: var(--text-color);">목표 제작 개수:</label>
             <input type="number" id="targetCount" min="1" placeholder="목표 개수를 입력하세요 (예: 30)">
@@ -500,6 +517,7 @@
             <div id="resultCount" class="result-box"></div> 
         </div>
 
+        
         
         <div class="input-group" style="margin-top: 20px;">
             <label class="category-label" style="color: var(--text-color);">목표 제작 횟수 (시도 횟수):</label>
@@ -511,16 +529,27 @@
 
     
     <div class="alarm-container">
+    
+ 
         <h2>Mabinogi Mobile [결계] 시계</h2>
+        
+        <div style="padding: 10px 15px;
+        border-radius: 8px; box-shadow: var(--inset-shadow); background: var(--container-bg); margin-bottom: 15px; text-align: left;">
+            <input type="checkbox" id="alarmToggle">
+            <label for="alarmToggle" style="font-size: 0.9em;
+            font-weight: 600; color: var(--accent-primary); padding-left: 20px;">
+                결계 시간 알람 활성화 </label>
+        </div>
      
-       
         <div id="clockDisplay">
             <div id="currentTime">--:--:--</div>
             
-            <div id="nextAlarmTime">다음 결계 소환: <strong>--:00</strong></div>
+            <div id="nextAlarmTime">다음 결계 소환: <strong>--:--</strong></div>
 
+            
             <div id="countdownLabel">다음 결계까지 남은 시간</div>
           
+     
             <div id="countdownTimer">00:00</div>
         </div>
     </div>
@@ -528,7 +557,7 @@
 
 <script>
     // ==========================================================
-    // 1. 레시피 데이터베이스 (CSV 파일 데이터로 수정 완료)
+    // 1. 레시피 데이터베이스 (오류 수정 완료)
     // ==========================================================
     const recipes = {
         "metal": { group: "금속 가공", items: {
@@ -584,12 +613,11 @@
             "suksuk_extract": { name: "쑥쑥 버섯 진액", yield: 5, ingredients: { "쑥쑥 버섯 포자": 10, "물이 든 병": 1 } },
             "fire_crystal": { name: "불꽃의 결정(석양 나비)", yield: 3, ingredients: { "석양나비": 3, "마나 허브": 10, "점토": 3 } },
             "glue": { name: "아교", yield: 5, ingredients: { "상급 생가죽": 30, "물이 든 병": 10 } },
-            "hide_powder": { name: "숨숨꽃 가루", yield: 5, ingredients: { "숨숨꽃": 20 } },
-            "neat_spore": { name: "깔끔 버섯 포자", yield: 15, ingredients: { "깔끔 버섯": 30, "종이": 3 } },
-            "neat_extract": { name: "깔끔 버섯 진액", yield: 5, ingredients: { "깔끔 버섯 포자": 10, "물이 든 병": 1 } },
+            "soomsoom_powder": { name: "숨숨꽃 가루", yield: 5, ingredients: { "숨숨꽃": 20 } },
+            "kalkkeum_spore": { name: "깔끔 버섯 포자", yield: 15, ingredients: { "깔끔 버섯": 30, "종이": 3 } },
+            "kalkkeum_extract": { name: "깔끔 버섯 진액", yield: 5, ingredients: { "깔끔 버섯 포자": 10, "물이 든 병": 1 } },
             "ice_crystal": { name: "얼음의 결정(흰얼음풍뎅이)", yield: 3, ingredients: { "흰얼음풍뎅이": 3, "마나 허브": 10, "점토": 3 } },
-            "mana_booster": { name: "마력 기폭제", yield: 10, ingredients: { "마력이 깃든 돌": 50, "마나 허브": 50, "반짝이는 이끼": 25 } },
-            "sealed_wrath_fragment": { name: "봉인된 분노의 파편", yield: 10, ingredients: { "분노의 파편": 10, "종이": 10, "봉인의 결정": 5 } },
+            "sealed_rage_fragment": { name: "봉인된 분노의 파편", yield: 10, ingredients: { "분노의 파편": 10, "종이": 10, "봉인의 결정": 5 } },
             "sealed_oblivion_fragment": { name: "봉인된 망각의 파편", yield: 10, ingredients: { "망각의 파편": 10, "종이": 10, "봉인의 결정": 5 } },
             "sealed_wild_fragment": { name: "봉인된 야성의 파편", yield: 10, ingredients: { "야성의 파편": 10, "종이": 10, "봉인의 결정": 5 } },
             "saengchaegik_powder": { name: "생채기꽃 가루", yield: 5, ingredients: { "생채기꽃": 20 } },
@@ -606,87 +634,88 @@
             "mayonnaise": { name: "마요네즈", yield: 3, ingredients: { "달걀": 10, "식용유": 2 } },
             "flour": { name: "밀가루", yield: 3, ingredients: { "밀": 15 } },
             "cheese": { name: "치즈", yield: 3, ingredients: { "우유": 6, "소금": 1 } },
-            "noodle": { name: "면", yield: 3, ingredients: { "밀가루": 3, "달걀": 5, "물이 든 병": 1 } },
-            "fresh_cream": { name: "생크림", yield: 3, ingredients: { "우유": 12, "달걀": 6, "설탕": 2 } },
-            "soaked_beans": { name: "물에 불린 콩", yield: 5, ingredients: { "콩": 30, "물이 든 병": 3 } },
-            "tofu": { name: "두부", yield: 3, ingredients: { "물에 불린 콩": 3, "물이 든 병": 3, "소금": 2, "옷감": 3 } },
-            "soymilk": { name: "두유", yield: 3, ingredients: { "물에 불린 콩": 3, "물이 든 병": 3, "소금": 1, "식용유": 1 } },
-            "soaked_rice": { name: "물에 불린 쌀", yield: 5, ingredients: { "쌀": 30, "물이 든 병": 6 } },
+            "noodle": { name: "면", yield: 3, ingredients: { "밀가루": 5, "물이 든 병": 1 } },
+            "dried_soybean": { name: "물에 불린 콩", yield: 3, ingredients: { "콩": 10, "물이 든 병": 1 } },
+            "soy_milk": { name: "두유", yield: 3, ingredients: { "물에 불린 콩": 3, "물이 든 병": 3, "소금": 1, "식용유": 1 } },
+            "dried_rice": { name: "물에 불린 쌀", yield: 5, ingredients: { "쌀": 30, "물이 든 병": 6 } },
             "cooked_rice": { name: "밥", yield: 3, ingredients: { "물에 불린 쌀": 8, "물이 든 병": 2 } },
             "dried_tea_leaf": { name: "말린 찻잎", yield: 3, ingredients: { "찻잎": 30 } },
             "fermented_tea_leaf": { name: "발효된 찻잎", yield: 3, ingredients: { "말린 찻잎": 5, "옷감": 1 } },
             "aged_large_meat": { name: "숙성된 커다란 고기", yield: 1, ingredients: { "커다란 고기": 1, "허브": 6, "마늘": 2, "소금": 2, "후추": 1 } }
         }}
     };
-
     // ==========================================================
     // 2. 핵심 로직 함수 (변경 없음)
     // ==========================================================
-    
+
     // 카테고리를 HTML로 렌더링
     function initializeItemSelector() {
         const container = document.getElementById('itemSelection');
         let html = '';
-        const categoryKeys = Object.keys(recipes); // "metal", "wood", ...
-        
+        const categoryKeys = Object.keys(recipes); 
+
         categoryKeys.forEach(categoryKey => {
             const category = recipes[categoryKey];
+            
             const headerColor = (function() {
                 switch(categoryKey) {
-                    case 'metal': return '#FFAB40'; // 주황색
-                    case 'wood': return '#00C853'; // 녹색
-                    case 'leather': return '#FFEB3B'; // 노란색
-                    case 'cloth': return '#03A9F4'; // 파란색
-                    case 'herb': return '#59C9A5'; // 청록색
-                    case 'food': return '#E57373'; // 붉은색
+                    case 'metal': return '#FFAB40'; 
+                    case 'wood': return '#00C853'; 
+                    case 'leather': return '#FFEB3B'; 
+                    case 'cloth': return '#03A9F4'; 
+                    case 'herb': return '#59C9A5'; 
+                    case 'food': return '#E57373'; 
                     default: return '#E0E0E0';
                 }
             })();
 
-            const contentId = `content-${categoryKey}`; // content-metal, content-wood
-            
-            // 헤더: 접기/펼치기 가능
-            // ID 형식: header-metal
+            const contentId = `content-${categoryKey}`; 
+
             html += `<div class="item-category-header" id="header-${contentId}" onclick="toggleCategory('${contentId}', this)" style="border-left: 5px solid ${headerColor};">`;
             html += `<span>${category.group}</span><span class="toggle-icon">▼</span>`;
-            html += `</div>`;
+            html += `</div>`; 
 
-            // 내용: 초기에는 CSS에 의해 숨겨진 상태
-            // ID 형식: content-metal
             html += `<div class="item-list-content" id="${contentId}">`;
-            
+
             for (const itemKey in category.items) {
                 const item = category.items[itemKey];
                 const itemId = `${categoryKey}|${itemKey}`;
                 
-                // 레시피 이름 옆에 yield 표시 제거
                 html += `<div class="item-checkbox-line">
-                            <input type="checkbox" id="${itemId}" name="selectedItems" value="${itemId}">
-                            <label for="${itemId}">${item.name}</label>
-                        </div>`;
+                    <input type="checkbox" id="${itemId}" name="selectedItems" value="${itemId}">
+                    <label for="${itemId}">${item.name}</label>
+                </div>`;
             }
             html += `</div>`;
         });
-
         container.innerHTML = html;
     }
 
-    // 카테고리 토글 로직 개선: 클래스 기반으로만 제어
     function toggleCategory(contentId, headerElement) {
         const content = document.getElementById(contentId);
+        if (content.classList.contains('expanded')) {
+            content.classList.remove('expanded');
+            headerElement.classList.remove('expanded');
+            headerElement.querySelector('.toggle-icon').textContent = '▼';
+        } else {
+            content.classList.add('expanded');
+            headerElement.classList.add('expanded');
+            headerElement.querySelector('.toggle-icon').textContent = '▲';
+        }
+        updateToggleAllButtonState();
+    }
 
-        // CSS 클래스 'expanded'로 제어
-        const isExpanded = content.classList.toggle('expanded'); 
-
-        // 헤더 클래스와 아이콘 변경
-        headerElement.classList.toggle('expanded', isExpanded);
-        const icon = headerElement.querySelector('.toggle-icon');
-        icon.textContent = isExpanded ? '▲' : '▼'; 
-
-        // 전체 펼치기 버튼 상태 업데이트 (버튼 텍스트 통일성을 위함)
+    function updateToggleAllButtonState() {
         const allContents = document.querySelectorAll('.item-list-content');
-        const allExpanded = Array.from(allContents).every(c => c.classList.contains('expanded'));
         const toggleAllButton = document.getElementById('toggleAllButton');
+        let allExpanded = true;
+        
+        allContents.forEach(content => {
+            if (!content.classList.contains('expanded')) {
+                allExpanded = false;
+            }
+        });
+        
         toggleAllButton.dataset.expanded = allExpanded;
         toggleAllButton.textContent = allExpanded ? '모두 접기 ▲' : '모두 펼치기 ▼';
     }
@@ -695,35 +724,31 @@
         const toggleAllButton = document.getElementById('toggleAllButton');
         const isCurrentlyExpanded = toggleAllButton.dataset.expanded === 'true';
         const allContents = document.querySelectorAll('.item-list-content');
-
+        
         allContents.forEach(content => {
-            // [수정] 헤더 ID를 content ID에 'header-'를 붙인 형태로 수정하여 정확한 요소를 찾도록 함
             const headerElement = document.getElementById(`header-${content.id}`);
-
-            if (isCurrentlyExpanded) { // 접기
+            
+            if (isCurrentlyExpanded) { 
                 content.classList.remove('expanded');
                 headerElement.classList.remove('expanded');
-            } else { // 펼치기
+            } else { 
                 content.classList.add('expanded');
                 headerElement.classList.add('expanded');
             }
-            
-            // 아이콘 변경
             const icon = headerElement.querySelector('.toggle-icon');
             icon.textContent = isCurrentlyExpanded ? '▼' : '▲';
         });
-
+        
         toggleAllButton.dataset.expanded = !isCurrentlyExpanded;
         toggleAllButton.textContent = !isCurrentlyExpanded ? '모두 접기 ▲' : '모두 펼치기 ▼';
     }
 
-    // 나머지 계산 로직은 변경 없음
     function resetSelection() {
         const selectedCheckboxes = document.querySelectorAll('input[name="selectedItems"]:checked');
         selectedCheckboxes.forEach(checkbox => {
             checkbox.checked = false;
         });
-
+        
         const materialCheckboxes = document.querySelectorAll('input[type="checkbox"].material-checkbox:checked');
         materialCheckboxes.forEach(checkbox => {
             checkbox.checked = false;
@@ -738,6 +763,7 @@
     function getSelectedRecipes() {
         const selectedCheckboxes = document.querySelectorAll('input[name="selectedItems"]:checked');
         const selected = [];
+        
         selectedCheckboxes.forEach(checkbox => {
             const [categoryKey, itemKey] = checkbox.value.split('|');
             if (recipes[categoryKey] && recipes[categoryKey].items[itemKey]) {
@@ -758,20 +784,19 @@
         let attempts = 0;
         let multiplier = 0;
         let expectedCount = 0;
-        
+
         if (isCountBased) {
-            multiplier = Math.ceil(target / recipe.yield); // 최소 시도 횟수
+            multiplier = Math.ceil(target / recipe.yield);
             attempts = multiplier;
             expectedCount = recipe.yield * attempts;
         } else {
-            attempts = target; // target은 시도 횟수
+            attempts = target;
             multiplier = attempts;
             expectedCount = recipe.yield * attempts;
         }
 
         const calculatedMaterials = {};
         let materialsHtml = '';
-        
         for (const material in recipe.ingredients) {
             const required = recipe.ingredients[material] * attempts;
             calculatedMaterials[material] = required;
@@ -795,35 +820,35 @@
                     ${materialsHtml}
                 </div>
             `,
+            materials: calculatedMaterials,
             attempts: attempts,
-            expectedCount: expectedCount,
-            materials: calculatedMaterials
+            expectedCount: expectedCount
         };
     }
 
-    function createFinalSumHtml(allCalculatedMaterials) {
+    function createFinalSumHtml(allMaterials) {
         const aggregatedMaterials = {};
-        allCalculatedMaterials.forEach(itemMaterials => {
-            for (const material in itemMaterials) {
+        allMaterials.forEach(materials => {
+            for (const material in materials) {
                 if (aggregatedMaterials[material]) {
-                    aggregatedMaterials[material] += itemMaterials[material];
+                    aggregatedMaterials[material] += materials[material];
                 } else {
-                    aggregatedMaterials[material] = itemMaterials[material];
+                    aggregatedMaterials[material] = materials[material];
                 }
             }
         });
 
         let finalHtml = '';
-        const sortedMaterials = Object.keys(aggregatedMaterials).sort(); // 가나다 순 정렬
-        
+        const sortedMaterials = Object.keys(aggregatedMaterials).sort();
+
         sortedMaterials.forEach((material, index) => {
             const required = aggregatedMaterials[material];
-            const uniqueId = `mat-check-${index}`;
-            
+            const checkboxId = `final-mat-${index}`;
+
             finalHtml += `
                 <div class="final-material-item">
-                    <input type="checkbox" id="${uniqueId}" class="material-checkbox">
-                    <label for="${uniqueId}" class="final-material-info">
+                    <input type="checkbox" id="${checkboxId}" class="material-checkbox">
+                    <label for="${checkboxId}" class="final-material-info">
                         <span class="material-name">${material}</span>
                         <span class="material-amount">${required.toLocaleString()} 개</span>
                     </label>
@@ -873,16 +898,13 @@
             <h4 style="color: var(--success-color);">✔️ ${targetCount.toLocaleString()}개 목표 제작 결과 요약</h4>
             <p><strong>총 시도 횟수 합계:</strong> ${totalAttempts.toLocaleString()} 회</p>
             <p><strong>총 예상 제작 개수 합계:</strong> ${totalExpectedResultCount.toLocaleString()} 개</p>
-            
             <h5 style="font-weight: bold; margin-bottom: 15px; margin-top:20px; border-bottom: 2px solid var(--accent-secondary); padding-bottom: 5px; color: var(--accent-secondary);">가공품 재료 목록</h5>
             ${detailedResultsHtml}
             ${finalSumHtml}
         `;
-        
         resultBox.style.display = 'block';
         document.getElementById('resultAttempts').style.display = 'none';
     }
-
 
     function calculateByAttempts() {
         const selectedRecipes = getSelectedRecipes();
@@ -910,23 +932,88 @@
         const finalSumHtml = createFinalSumHtml(allMaterials);
 
         resultBox.innerHTML = `
-            <h4 style="color: var(--success-color);">✔️ ${craftAttempts.toLocaleString()}회 시도 시 예상 결과 요약</h4>
+            <h4 style="color: var(--success-color);">✔️ ${craftAttempts.toLocaleString()}회 시도 결과 요약</h4>
             <p><strong>총 예상 제작 개수 합계:</strong> ${totalExpectedResultCount.toLocaleString()} 개</p>
-            
             <h5 style="font-weight: bold; margin-bottom: 15px; margin-top:20px; border-bottom: 2px solid var(--accent-secondary); padding-bottom: 5px; color: var(--accent-secondary);">가공품 재료 목록</h5>
             ${detailedResultsHtml}
             ${finalSumHtml}
         `;
-        
         resultBox.style.display = 'block';
         document.getElementById('resultCount').style.display = 'none';
     }
 
+    // ==========================================================
+    // 3. 시간 및 알람 기능 (최종 수정 완료: 10초 전 알람 & 시계 작동)
+    // ==========================================================
+    let clockInterval; 
+    let alarmTriggeredToday = false; 
+    let blinkingInterval;
 
-    // ==========================================================
-    // 3. 결계 시계 기능 함수 (변경 없음)
-    // ==========================================================
-    const ALARM_HOURS = [0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22];
+    // === 시각적 알람 효과 함수 ---
+    function startBlinking() {
+        const clockDisplay = document.getElementById('clockDisplay');
+        if (clockDisplay && !clockDisplay.classList.contains('alarm-blinking')) {
+            clockDisplay.classList.add('alarm-blinking');
+        }
+        if (blinkingInterval) clearTimeout(blinkingInterval);
+        blinkingInterval = setTimeout(stopBlinking, 10000);
+    }
+
+    function stopBlinking() {
+        const clockDisplay = document.getElementById('clockDisplay');
+        if (clockDisplay) {
+            clockDisplay.classList.remove('alarm-blinking');
+        }
+        if (blinkingInterval) {
+            clearTimeout(blinkingInterval);
+            blinkingInterval = null;
+        }
+    }
+    // ----------------------------
+
+    function playAlarm() {
+        if (!document.getElementById('alarmToggle').checked) {
+            return;
+        }
+
+        startBlinking();
+
+        try {
+            const context = new (window.AudioContext || window.webkitAudioContext)();
+            if (!context) return;
+            
+            let beepCount = 0;
+            const maxBeeps = 5;
+            const beepDuration = 0.1;
+            const gapDuration = 0.1;
+
+            function singleBeep() {
+                if (beepCount >= maxBeeps) {
+                    return;
+                }
+
+                const oscillator = context.createOscillator();
+                const gainNode = context.createGain();
+                oscillator.connect(gainNode);
+                gainNode.connect(context.destination);
+
+                oscillator.type = 'square';
+                oscillator.frequency.setValueAtTime(1000, context.currentTime);
+                gainNode.gain.setValueAtTime(0.5, context.currentTime);
+                
+                oscillator.start(context.currentTime);
+                oscillator.stop(context.currentTime + beepDuration);
+
+                beepCount++;
+                if (beepCount < maxBeeps) {
+                    setTimeout(singleBeep, (beepDuration + gapDuration) * 1000);
+                }
+            }
+            singleBeep();
+        } catch (e) {
+            console.warn("Web Audio API not supported or failed to play alarm.", e);
+        }
+    }
 
     function updateClock() {
         const now = new Date();
@@ -934,52 +1021,66 @@
         const minutes = now.getMinutes();
         const seconds = now.getSeconds();
 
-        // 1. 현재 시각 표시
-        const timeString = [hours, minutes, seconds].map(val => val.toString().padStart(2, '0')).join(':');
+        // 1. 현재 시간 표시
+        const timeString = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
         document.getElementById('currentTime').textContent = timeString;
 
-        // 2. 다음 알람 시간 계산
-        let nextAlarmHour = ALARM_HOURS.find(h => h > hours) || ALARM_HOURS[0];
-        if (nextAlarmHour < hours || (nextAlarmHour === hours && minutes > 0)) {
-             // 현재 시각보다 작은 경우, 다음 날 첫 알람 시간으로 설정
-            nextAlarmHour = ALARM_HOURS[0];
+        // 2. 다음 알람 시간 찾기: 매 시간 정각 (1시간 간격)
+        let nextAlarmDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), hours + 1, 0, 0); 
+        
+        if (nextAlarmDate.getTime() < now.getTime()) { 
+            nextAlarmDate.setDate(nextAlarmDate.getDate() + 1); 
+        } 
+        
+        const timeDifference = nextAlarmDate.getTime() - now.getTime();
+        const totalSeconds = Math.floor(timeDifference / 1000); 
+
+        const nextBoundaryHour = nextAlarmDate.getHours().toString().padStart(2, '0');
+        const nextBoundaryMinute = nextAlarmDate.getMinutes().toString().padStart(2, '0');
+        document.getElementById('nextAlarmTime').innerHTML = `다음 결계 소환: <strong>${nextBoundaryHour}:${nextBoundaryMinute}</strong>`; 
+
+        const countdownMinutes = Math.floor(totalSeconds / 60);
+        const countdownSeconds = totalSeconds % 60;
+        const countdownString = `${countdownMinutes.toString().padStart(2, '0')}:${countdownSeconds.toString().padStart(2, '0')}`;
+
+        // 알람 조건: 10초 이하일 때 (매 시간 정각의 10초 전)
+        if (totalSeconds <= 10 && totalSeconds > 0 && document.getElementById('alarmToggle').checked) { 
+            if (!alarmTriggeredToday) {
+                playAlarm();
+                alarmTriggeredToday = true;
+            }
+            document.getElementById('countdownTimer').textContent = countdownString;
+            
+            // 시각 효과를 위한 클래스 추가
+            const clockDisplay = document.getElementById('clockDisplay');
+            if (clockDisplay && !clockDisplay.classList.contains('alarm-blinking')) {
+                clockDisplay.classList.add('alarm-blinking');
+            }
+        } else {
+            // 시간이 10초를 지나면 클래스 제거 및 알람 플래그 초기화
+            const clockDisplay = document.getElementById('clockDisplay');
+            if (clockDisplay) {
+                clockDisplay.classList.remove('alarm-blinking');
+            }
+            // 카운트다운 표시 및 알람 플래그 초기화 (1초 이상 남았을 때)
+            if (totalSeconds > 1) { 
+                alarmTriggeredToday = false; 
+                document.getElementById('countdownTimer').textContent = countdownString; 
+            } 
         }
-
-        const nextAlarmTime = `${nextAlarmHour.toString().padStart(2, '0')}:00`;
-        document.getElementById('nextAlarmTime').innerHTML = `다음 결계 소환: <strong>${nextAlarmTime}</strong>`;
-
-        // 3. 카운트다운 계산
-        let nextAlarmDate = new Date(now);
-        nextAlarmDate.setHours(nextAlarmHour, 0, 0, 0);
-
-        // 이미 시간이 지난 경우 다음 날로 설정
-        if (nextAlarmDate.getTime() < now.getTime()) {
-            nextAlarmDate.setDate(nextAlarmDate.getDate() + 1);
-        }
-
-        const diff = nextAlarmDate.getTime() - now.getTime();
-        const countdownHours = Math.floor(diff / (1000 * 60 * 60));
-        const countdownMinutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-        const countdownSeconds = Math.floor((diff % (1000 * 60)) / 1000);
-
-        const countdownString = [countdownHours, countdownMinutes, countdownSeconds]
-            .map(val => val.toString().padStart(2, '0')).join(':');
-
-        document.getElementById('countdownTimer').textContent = countdownString;
     }
 
     function startClockInterval() {
         updateClock();
-        setInterval(updateClock, 1000);
+        clockInterval = setInterval(updateClock, 1000);
     }
 
     // ==========================================================
-    // 4. 다크/라이트 모드 토글 (변경 없음)
+    // 4. 다크/라이트 모드 전환 (변경 없음)
     // ==========================================================
     function toggleMode() {
         const body = document.body;
         const toggleButton = document.getElementById('modeToggle');
-
         if (body.classList.contains('dark-mode')) {
             body.classList.remove('dark-mode');
             body.classList.add('light-mode');
@@ -994,11 +1095,28 @@
     }
 
     // ==========================================================
-    // 5. 초기화 및 모드 로드 (변경 없음)
+    // 5. 초기화 및 모드 로드 (사용자 요청에 따라 알람 OFF 유지)
     // ==========================================================
+    function saveAlarmState() {
+        const isChecked = document.getElementById('alarmToggle').checked;
+        localStorage.setItem('mabiAlarmEnabled', isChecked ? 'true' : 'false');
+    }
+
+    function loadAlarmState() {
+        localStorage.removeItem('mabiAlarmEnabled'); 
+
+        const toggle = document.getElementById('alarmToggle');
+        if (toggle) {
+            toggle.checked = false; 
+            toggle.addEventListener('change', saveAlarmState);
+        }
+    }
+    // --------------------------------------------------------
+
     window.onload = function() {
-        initializeItemSelector();
-        startClockInterval();
+        initializeItemSelector(); // 계산기 로딩
+        startClockInterval();     // 시계 로딩
+        loadAlarmState();         // 알람 상태 로딩
         
         const savedMode = localStorage.getItem('mode') || 'dark';
         const body = document.body;
